@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>heatmap</title>
+    <link type="text/css" rel="stylesheet" href="src/css/style.css">
+
+</head>
+<body>
+<script type = "text/javascript" src = "src/js/d3.min.js"></script>
+<script>
+
+    var margin = {top:50, bottom:100, left:30, right:0},
+            width = 800 - margin.left - margin.right,
+            height = 960 - margin.bottom - margin.top,
+            gridsize = Math.floor(width/24),
+            buckets = 9,
+            colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"],
+            days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+            times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"];
+
+    d3.tsv("data.tsv",
+            function(d){
+                return {
+                  day: +d.day,
+                    hour: +d.hour,
+                    value: +d.value
+                };
+            },
+
+            function(error, data) {
+                var colorScale = d3.scale.quantile()
+                        .domain([ 0 , buckets - 1, d3.max(data, function(d){return d.value;}) ])
+                        .range(colors);
+
+                var svg = d3.select("body").append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height",height + margin.bottom + margin.top)
+                        .append("g")
+                        .attr("transform", "translate("+ margin.left + ", "+ margin.top +")");
+
+                var heatmap = svg.selectAll(".hours")
+                        .data(data)
+                        .enter()
+                        .append("rect")
+                        .attr("x", function(d){return (d.hour - 1) * gridsize;})
+                        .attr("y", function(d){return (d.day - 1) * gridsize;})
+                        .attr("class", "hour bordered")
+                        .attr("width", gridsize)
+                        .attr("height", gridsize)
+                        .style("fill",function(d){return colorScale(d.value);});
+
+                var daylabels = svg.selectAll(".daylabels")
+                        .data(days)
+                        .enter()
+                        .append("text")
+                        .text(function(d) {return d;})
+                        .attr("x", 0)
+                        .attr("y",function(d,i) {return i * gridsize})
+                        .attr("transform", "translate(-20," + gridsize / 2 +")");
+
+                var hourlabels  = svg.selectAll(".hourlabels")
+                        .data(times)
+                        .enter()
+                        .append("text")
+                        .text(function(d) {return d;})
+                        .attr("x", function(d,i) {return i * gridsize})
+                        .attr("y", 0)
+                        .attr("transform", "translate("+ gridsize / 5.5 + ",-5)");
+
+            });
+
+</script>
+
+</body>
+</html>
